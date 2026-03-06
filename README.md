@@ -2,12 +2,12 @@
 
 MUI-aligned markdown components for [react-admin](https://marmelab.com/react-admin/) powered by [MDXEditor](https://mdxeditor.dev/).
 
-## Components
+## Exports
 
 - `MdxInput`: rich MDX editor input for `Create` and `Edit` forms
 - `MdxField`: read-only markdown renderer for `Show` layouts
-- `MdxShow`: alias of `MdxField` (same props, show-oriented naming)
-- `defaultPlugins`: opinionated MDXEditor plugin preset
+- `defaultInputPlugins`: default plugin preset used by `MdxInput`
+- `defaultFieldPlugins`: default plugin preset used by `MdxField`
 
 ## Installation
 
@@ -61,25 +61,57 @@ export const PostShow = () => (
 ## Customizing Plugins
 
 ```tsx
-import { MdxInput, defaultPlugins } from 'ra-mdx-editor'
+import { MdxInput, defaultInputPlugins } from 'ra-mdx-editor'
 import { headingsPlugin } from '@mdxeditor/editor'
 
 <MdxInput
   source="body"
-  plugins={[...defaultPlugins, headingsPlugin({ allowedHeadingLevels: [1, 2] })]}
+  mdxProps={{
+    plugins: [
+      ...defaultInputPlugins,
+      headingsPlugin({ allowedHeadingLevels: [1, 2] }),
+    ],
+  }}
+/>
+```
+
+```tsx
+import { MdxField, defaultFieldPlugins } from 'ra-mdx-editor'
+import { headingsPlugin } from '@mdxeditor/editor'
+
+<MdxField
+  source="body"
+  plugins={[...defaultFieldPlugins, headingsPlugin({ allowedHeadingLevels: [2, 3] })]}
 />
 ```
 
 ## API Notes
 
-`MdxInput` accepts react-admin input props (`source`, `label`, `validate`, etc.) and MDXEditor props except:
+`MdxInput` accepts react-admin input props (`source`, `label`, `validate`, `required`, `readOnly`, etc.).
+Pass MDXEditor-specific props via `mdxProps`.
+
+`mdxProps` accepts MDXEditor props except:
 
 - `markdown`
 - `onChange`
 - `onBlur`
+- `onError`
 - `ref`
+- `readOnly`
+- `spellCheck`
 
-Those are controlled internally to sync with react-admin form state.
+Those are controlled by `MdxInput` to keep the editor in sync with react-admin form state.
+
+`MdxField` accepts standard react-admin field props plus MDXEditor props (except `markdown`, `readOnly`, and `ref`).
+
+- `MdxField` defaults to `defaultFieldPlugins`
+- `MdxInput` defaults to `defaultInputPlugins`
+- `MdxField` supports `emptyText` when the source value is missing
+
+TypeScript helper types are also exported:
+
+- `MdxInputProps`
+- `MdxFieldProps`
 
 ## Publishing
 
