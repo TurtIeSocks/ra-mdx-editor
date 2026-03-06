@@ -215,7 +215,6 @@ function Editor(props: EditorProps) {
 
   const markdown = typeof value === 'string' ? value : ''
 
-  console.log(props)
   React.useEffect(() => {
     if (!ref.current) {
       return

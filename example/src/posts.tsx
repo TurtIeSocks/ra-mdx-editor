@@ -36,12 +36,7 @@ export const PostEdit = () => (
 )
 
 export const PostCreate = () => (
-  <Create
-    transform={(data, opts) => {
-      console.log({ data, opts })
-      return data
-    }}
-  >
+  <Create>
     <SimpleForm>
       <TextInput required source="title" helperText="Test" />
       <MdxInput
