@@ -3,45 +3,67 @@ import {
   Datagrid,
   TextField,
   EditButton,
+  ShowButton,
   Edit,
   SimpleForm,
   Create,
   TextInput,
-} from "react-admin";
-import { MdxInput, defaultPlugins, headingsPlugin } from "ra-mdx-editor";
+  Show,
+  SimpleShowLayout,
+} from 'react-admin'
+import { MdxField, MdxInput } from '../../src'
 
 export const PostList = () => (
   <List>
     <Datagrid rowClick="edit">
       <TextField source="id" />
       <TextField source="title" />
-      <TextField source="body" />
+      <TextField source="body" sx={{ maxWidth: 320 }} />
+      <ShowButton />
       <EditButton />
     </Datagrid>
   </List>
-);
+)
 
 export const PostEdit = () => (
   <Edit>
     <SimpleForm>
-      <TextInput source="id" InputProps={{ disabled: true }} />
-      <TextInput source="title" />
-      <MdxInput source="body" />
+      <TextInput source="id" disabled />
+      <TextInput source="title" placeholder="" />
+      <MdxInput fullWidth source="body" label="Post Body" />
     </SimpleForm>
   </Edit>
-);
+)
 
 export const PostCreate = () => (
-  <Create>
+  <Create
+    transform={(data, opts) => {
+      console.log({ data, opts })
+      return data
+    }}
+  >
     <SimpleForm>
-      <TextInput source="title" />
+      <TextInput required source="title" helperText="Test" />
       <MdxInput
+        required
+        fullWidth
         source="body"
+        helperText="Halp"
+        label="Post Body"
+        // readOnly
+        mdxProps={{ placeholder: 'Override...' }}
         placeholder="Enter your post content here..."
-        className="custom-mdx-editor"
-        autoFocus
-        plugins={[...defaultPlugins, headingsPlugin()]}
       />
     </SimpleForm>
   </Create>
-);
+)
+
+export const PostShow = () => (
+  <Show>
+    <SimpleShowLayout>
+      <TextField source="id" />
+      <TextField source="title" />
+      <MdxField source="body" />
+    </SimpleShowLayout>
+  </Show>
+)

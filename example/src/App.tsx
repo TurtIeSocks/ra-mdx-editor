@@ -1,8 +1,9 @@
-import { Admin, Resource } from "react-admin";
-import simpleRestProvider from "ra-data-simple-rest";
-import { PostList, PostEdit, PostCreate } from "./posts";
+import { Admin, Resource } from 'react-admin'
+import jsonServerProvider from 'ra-data-json-server'
+import { PostList, PostEdit, PostCreate, PostShow } from './posts'
+import '@mdxeditor/editor/style.css'
 
-const dataProvider = simpleRestProvider("https://jsonplaceholder.typicode.com");
+const dataProvider = jsonServerProvider('https://jsonplaceholder.typicode.com')
 
 const App = () => (
   <Admin dataProvider={dataProvider}>
@@ -11,8 +12,9 @@ const App = () => (
       list={PostList}
       edit={PostEdit}
       create={PostCreate}
+      show={PostShow}
     />
   </Admin>
-);
+)
 
-export default App;
+export default App
