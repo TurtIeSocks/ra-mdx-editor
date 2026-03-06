@@ -45,7 +45,6 @@ export const PostCreate = () => (
         source="body"
         helperText="Halp"
         label="Post Body"
-        // readOnly
         mdxProps={{ placeholder: 'Override...' }}
         placeholder="Enter your post content here..."
       />

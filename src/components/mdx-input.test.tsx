@@ -4,21 +4,50 @@ import { AdminContext, SaveButton, SimpleForm, Toolbar } from 'react-admin'
 import { describe, it, expect, vi } from 'vitest'
 import { MDXEditor } from '@mdxeditor/editor'
 import userEvent from '@testing-library/user-event'
+import React from 'react'
 
 // Mock MDXEditor because it's heavy and relies on browser APIs not fully implemented in jsdom
 // Mock MDXEditor deeply to avoid side-effects from sub-dependencies like Sandpack/Stitches
-vi.mock('@mdxeditor/editor', () => {
-  return {
-    MDXEditor: vi.fn(({ markdown, onChange, placeholder, className }) => (
+vi.mock('@mdxeditor/editor', async () => {
+  const ReactModule = await import('react')
+
+  const MockEditor = ({
+    markdown,
+    onChange,
+    placeholder,
+    className,
+  }: {
+    markdown?: string
+    onChange?: (value: string) => void
+    placeholder?: string
+    className?: string
+  }) => {
+    const [internalMarkdown, setInternalMarkdown] = ReactModule.useState(
+      typeof markdown === 'string' ? markdown : ''
+    )
+
+    ReactModule.useEffect(() => {
+      setInternalMarkdown(typeof markdown === 'string' ? markdown : '')
+    }, [markdown])
+
+    return (
       <div data-testid="mdx-editor" className={className}>
         <textarea
           data-testid="mdx-textarea"
-          value={markdown}
-          onChange={(e) => onChange?.(e.target.value)}
+          value={internalMarkdown}
+          onChange={(e) => {
+            const nextValue = e.target.value
+            setInternalMarkdown(nextValue)
+            onChange?.(nextValue)
+          }}
           placeholder={placeholder}
         />
       </div>
-    )),
+    )
+  }
+
+  return {
+    MDXEditor: vi.fn(MockEditor),
     headingsPlugin: vi.fn(),
     imagePlugin: vi.fn(),
     linkPlugin: vi.fn(),
@@ -102,6 +131,36 @@ describe('MdxInput', () => {
     const editorProps = editorCalls[editorCalls.length - 1]?.[0]
     expect(Array.isArray(editorProps?.plugins)).toBe(true)
     expect(editorProps?.plugins?.length).toBeGreaterThan(0)
+  })
+
+  it('avoids re-rendering the editor when the parent rerenders without value changes', async () => {
+    const user = userEvent.setup()
+
+    function Harness() {
+      const [counter, setCounter] = React.useState(0)
+
+      return (
+        <AdminContext>
+          <button type="button" onClick={() => setCounter((prev) => prev + 1)}>
+            rerender {counter}
+          </button>
+          <SimpleForm onSubmit={vi.fn()} toolbar={false}>
+            <MdxInput source="body" defaultValue="# Hello World" />
+          </SimpleForm>
+        </AdminContext>
+      )
+    }
+
+    render(<Harness />)
+    await screen.findByTestId('mdx-editor')
+
+    const initialCallCount = vi.mocked(MDXEditor).mock.calls.length
+
+    await user.click(screen.getByRole('button', { name: /rerender/i }))
+
+    await waitFor(() => {
+      expect(vi.mocked(MDXEditor).mock.calls.length).toBe(initialCallCount)
+    })
   })
 
   it('prevents submission when required and empty, then submits once filled', async () => {

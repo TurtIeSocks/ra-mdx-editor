@@ -129,7 +129,7 @@ export const MdxInput = (props: MdxInputProps): React.JSX.Element => {
   }, [required, validate])
 
   const {
-    field,
+    field: { value, ...field },
     fieldState: { error, invalid },
     id,
     isRequired,
@@ -145,6 +145,7 @@ export const MdxInput = (props: MdxInputProps): React.JSX.Element => {
   })
 
   const [isFocused, setIsFocused] = React.useState(false)
+  const inputRef = React.useRef<MDXEditorMethods | null>(null)
 
   const handleBlurCapture = React.useCallback(
     (event: React.FocusEvent<HTMLDivElement>): void => {
@@ -155,16 +156,26 @@ export const MdxInput = (props: MdxInputProps): React.JSX.Element => {
       setIsFocused(false)
       field.onBlur()
     },
-    [field, setIsFocused]
+    [field]
   )
   const handleFocusCapture = React.useCallback((): void => {
     setIsFocused(true)
-  }, [setIsFocused])
+  }, [])
 
   const slotProps = React.useMemo(
-    () => ({ input: { readOnly, ...mdxProps } }),
+    () => ({ input: { readOnly, inputRef, ...mdxProps } }),
     [mdxProps, readOnly]
   )
+
+  React.useEffect(() => {
+    if (!inputRef.current || typeof value !== 'string') {
+      return
+    }
+
+    if (inputRef.current.getMarkdown() !== value) {
+      inputRef.current.setMarkdown(value)
+    }
+  }, [value])
 
   return (
     <Labeled
@@ -183,6 +194,7 @@ export const MdxInput = (props: MdxInputProps): React.JSX.Element => {
         slots={SLOTS}
         required={isRequired}
         slotProps={slotProps}
+        value={value}
         {...field}
         error={invalid}
         helperText={
@@ -199,7 +211,9 @@ export const MdxInput = (props: MdxInputProps): React.JSX.Element => {
   )
 }
 
-// ========================================= HELPERS =========================================
+// ========================================= Editor =========================================
+
+const PREFIX = 'RaMdxInput'
 
 interface EditorProps extends Omit<
   TextFieldProps,
@@ -209,27 +223,24 @@ interface EditorProps extends Omit<
 }
 
 function Editor(props: EditorProps) {
-  const ref = React.useRef<MDXEditorMethods>(null)
-
-  const { value, spellCheck, mdxProps, ref: _, ...rest } = props
-
-  const markdown = typeof value === 'string' ? value : ''
-
-  React.useEffect(() => {
-    if (!ref.current) {
-      return
-    }
-
-    if (ref.current.getMarkdown() !== markdown) {
-      ref.current.setMarkdown(markdown)
-    }
-  }, [markdown])
+  const {
+    value,
+    spellCheck,
+    mdxProps,
+    // Pull these out
+    ref,
+    inputRef,
+    inputProps,
+    slots,
+    ownerState,
+    ...rest
+  } = props as EditorProps & { ownerState?: unknown }
 
   return (
     <MDXEditor
-      ref={ref}
+      ref={inputRef}
       plugins={defaultInputPlugins}
-      markdown={markdown}
+      markdown={typeof value === 'string' ? value : ''}
       spellCheck={!!spellCheck}
       {...rest}
       {...mdxProps}
@@ -237,7 +248,38 @@ function Editor(props: EditorProps) {
   )
 }
 
-const PREFIX = 'RaMdxInput'
+const MemoizedEditor = React.memo(Editor, (prev, next) => {
+  return shallowEqual(prev.mdxProps, next.mdxProps)
+})
+MemoizedEditor.displayName = 'MdxInputEditor'
+
+function shallowEqual(
+  previous: Record<string, unknown> | undefined,
+  next: Record<string, unknown> | undefined
+): boolean {
+  if (previous === next) {
+    return true
+  }
+
+  if (!previous || !next) {
+    return false
+  }
+
+  const previousKeys = Object.keys(previous)
+  const nextKeys = Object.keys(next)
+
+  if (previousKeys.length !== nextKeys.length) {
+    return false
+  }
+
+  return previousKeys.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(next, key) &&
+      Object.is(previous[key], next[key])
+  )
+}
+
+// ========================================= TextField =========================================
 
 const StyledResettableTextField = styled(ResettableTextField, {
   name: PREFIX,
@@ -245,5 +287,5 @@ const StyledResettableTextField = styled(ResettableTextField, {
 })({})
 
 const SLOTS: React.ComponentProps<typeof StyledResettableTextField>['slots'] = {
-  input: Editor,
+  input: MemoizedEditor,
 }
