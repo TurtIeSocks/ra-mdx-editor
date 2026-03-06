@@ -1,12 +1,13 @@
 # ra-mdx-editor
 
-A [React Admin](https://marmelab.com/react-admin/) input component powered by [MDXEditor](https://mdxeditor.dev/).
+MUI-aligned markdown components for [react-admin](https://marmelab.com/react-admin/) powered by [MDXEditor](https://mdxeditor.dev/).
 
-## Features
+## Components
 
-- 📝 **WYSIWYG Markdown Editing**: harnessing the power of MDXEditor.
-- 🔌 **Plug-and-Play**: drop it into any `SimpleForm` or `TabbedForm`.
-- 🎨 **Customizable**: accepts all `MDXEditor` props including plugins, styling, and toolbar configuration.
+- `MdxInput`: rich MDX editor input for `Create` and `Edit` forms
+- `MdxField`: read-only markdown renderer for `Show` layouts
+- `MdxShow`: alias of `MdxField` (same props, show-oriented naming)
+- `defaultPlugins`: opinionated MDXEditor plugin preset
 
 ## Installation
 
@@ -14,17 +15,21 @@ A [React Admin](https://marmelab.com/react-admin/) input component powered by [M
 npm install ra-mdx-editor @mdxeditor/editor
 ```
 
-*Note: React Admin and React are assumed to be present in your project.*
+You also need the standard react-admin + MUI stack in your app.
 
-## Usage
-
-### Basic Usage
-
-Import `MdxInput` and use it within your React Admin resources.
+## Quick Start
 
 ```tsx
-import { Edit, SimpleForm, TextInput } from 'react-admin';
-import { MdxInput } from 'ra-mdx-editor';
+import {
+  Edit,
+  Show,
+  SimpleForm,
+  SimpleShowLayout,
+  TextInput,
+  TextField,
+} from 'react-admin'
+import { MdxInput, MdxField } from 'ra-mdx-editor'
+import '@mdxeditor/editor/style.css'
 
 export const PostEdit = () => (
   <Edit>
@@ -33,88 +38,69 @@ export const PostEdit = () => (
       <MdxInput source="body" />
     </SimpleForm>
   </Edit>
-);
+)
+
+export const PostShow = () => (
+  <Show>
+    <SimpleShowLayout>
+      <TextField source="title" />
+      <MdxField source="body" />
+    </SimpleShowLayout>
+  </Show>
+)
 ```
 
-### Custom Plugins
+## MUI-Like Editing Experience
 
-You can extend the default plugins or provide your own complete list.
+`MdxInput` now ships with:
 
-```tsx
-import { MdxInput, defaultPlugins, headingsPlugin } from 'ra-mdx-editor';
+- MUI-style focus ring, error border, and disabled state
+- toolbar + content spacing aligned with MUI form controls
+- RA-aware label/validation/helper text behavior
 
-export const PostEdit = () => (
-    <Edit>
-        <SimpleForm>
-            <MdxInput 
-                source="body" 
-                plugins={[...defaultPlugins, headingsPlugin({ allowedHeadingLevels: [1, 2] })]}
-            />
-        </SimpleForm>
-    </Edit>
-);
-```
-
-### Styling
+## Customizing Plugins
 
 ```tsx
-<MdxInput 
-    source="description" 
-    className="my-custom-editor"
-    placeholder="Start typing..."
+import { MdxInput, defaultPlugins } from 'ra-mdx-editor'
+import { headingsPlugin } from '@mdxeditor/editor'
+
+<MdxInput
+  source="body"
+  plugins={[...defaultPlugins, headingsPlugin({ allowedHeadingLevels: [1, 2] })]}
 />
 ```
 
-## Props
+## API Notes
 
-`MdxInput` accepts all props from React Admin's `useInput` (like `source`, `label`, `validate`) AND all props from `MDXEditor` (except `markdown`, `onChange`, `ref`, `onBlur` which are handled internally).
+`MdxInput` accepts react-admin input props (`source`, `label`, `validate`, etc.) and MDXEditor props except:
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `source` | `string` | Field name in the record. |
-| `plugins` | `Plugin[]` | List of MDXEditor plugins. Defaults to `defaultPlugins`. |
-| `className` | `string` | CSS class for the wrapper div. |
-| ... | | All other `MDXEditor` props. |
+- `markdown`
+- `onChange`
+- `onBlur`
+- `ref`
+
+Those are controlled internally to sync with react-admin form state.
 
 ## Publishing
 
-This project is configured to publish to NPM automatically when a new GitHub release is created.
+This package is intended for npm publishing via GitHub Releases (`.github/workflows/publish.yml`).
 
-### Prerequisites
+Recommended pre-release checklist:
 
-1.  **NPM Token**: Create a "Classic" or "Granular" automation token on NPM.
-2.  **GitHub Secret**: Add the token as a repository secret named `NPM_TOKEN` in your GitHub repository settings (**Settings > Secrets and variables > Actions**).
+1. `npm run lint`
+2. `npm run test`
+3. `npm run build`
+4. bump `version` in `package.json`
+5. create a GitHub release
 
-### How to Publish
+## Example App
 
-1.  Update the version in `package.json`.
-2.  Commit and push the change.
-3.  Create a new Release (or Tag) on GitHub.
-4.  The "Publish to NPM" workflow will trigger, run tests, build the project, and publish it.
+Run the bundled example:
 
-
-## Running the Example
-
-This repository includes a fully functional example application.
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/TurtIeSocks/ra-mdx-editor.git
-   cd ra-mdx-editor
-   ```
-
-2. **Install dependencies and build the library**
-   ```bash
-   npm install
-   npm run build
-   ```
-
-3. **Run the example**
-   ```bash
-   cd example
-   npm install
-   npm run dev
-   ```
-
-4. **Open in browser**
-   Navigate to `http://localhost:5173` (or the port shown in your terminal).
+```bash
+npm install
+npm run build
+cd example
+npm install
+npm run dev
+```
